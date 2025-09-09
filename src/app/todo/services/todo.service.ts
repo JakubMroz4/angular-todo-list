@@ -1,5 +1,6 @@
 import { Injectable } from '@angular/core';
 import { Todo } from '../models/todo';
+import { TodoFilter } from '../enums/todoFilterEnum';
 
 @Injectable({
   providedIn: 'root',
@@ -9,24 +10,6 @@ export class TodoService {
 
   private apiUrl: string =
     'https://boolean-uk-api-server.fly.dev/JakubMroz4/todo';
-
-  private todoList: Todo[] = [
-    {
-      id: this.todoId++,
-      title: 'serve the app',
-      completed: true,
-    },
-    {
-      id: this.todoId++,
-      title: 'familiarise yourself with the codebase',
-      completed: false,
-    },
-    {
-      id: this.todoId++,
-      title: 'start talking to the api',
-      completed: false,
-    },
-  ];
 
   // DONE replace with a get request
   todos: Promise<Todo[]> = this.fetchTodos();
@@ -41,6 +24,21 @@ export class TodoService {
       throw new Error('Failed to fetch todos');
     }
     return await response.json();
+  }
+
+  async getTodos(filter: TodoFilter): Promise<Todo[]> {
+    const todos = await this.todos;
+    let filtered: Todo[];
+
+    if (filter === TodoFilter.Completed) {
+      filtered = todos.filter((todo) => todo.completed);
+    } else if (filter === TodoFilter.NotCompleted) {
+      filtered = todos.filter((todo) => !todo.completed);
+    } else {
+      return todos;
+    }
+
+    return filtered;
   }
 
   async addTodo(title: string): Promise<Todo> {
@@ -62,7 +60,7 @@ export class TodoService {
   }
 
   async updateTodo(updatedTodo: Todo): Promise<Todo> {
-    // TODO: replace with a PUT request
+    // DONE replace with a PUT request
     const response = await fetch(this.apiUrl + '/' + updatedTodo.id, {
       method: 'PUT',
       headers: { 'Content-Type': 'application/json' },
