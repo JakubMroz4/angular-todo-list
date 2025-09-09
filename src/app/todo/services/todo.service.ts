@@ -6,6 +6,10 @@ import { Todo } from '../models/todo';
 })
 export class TodoService {
   private todoId = 1;
+
+  private apiUrl: string =
+    'https://boolean-uk-api-server.fly.dev/JakubMroz4/todo';
+
   private todoList: Todo[] = [
     {
       id: this.todoId++,
@@ -24,29 +28,54 @@ export class TodoService {
     },
   ];
 
-  // TODO replace with a get request
-  todos: Promise<Todo[]> = Promise.resolve(this.todoList);
+  // DONE replace with a get request
+  todos: Promise<Todo[]> = this.fetchTodos();
+
+  async refreshTodos(): Promise<void> {
+    this.todos = this.fetchTodos();
+  }
+
+  async fetchTodos(): Promise<Todo[]> {
+    const response = await fetch(this.apiUrl);
+    if (!response.ok) {
+      throw new Error('Failed to fetch todos');
+    }
+    return await response.json();
+  }
 
   async addTodo(title: string): Promise<Todo> {
-    // TODO: replace with a POST request
+    // DONE: replace with a POST request
     const todo = {
-      id: this.todoId++,
       title: title,
-      completed: false,
     };
-    this.todoList.push(todo);
+    const response = await fetch(this.apiUrl, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(todo),
+    });
+    if (!response.ok) {
+      throw new Error('Failed to POST todo');
+    }
 
-    return todo;
+    this.refreshTodos();
+    return await response.json();
   }
 
   async updateTodo(updatedTodo: Todo): Promise<Todo> {
     // TODO: replace with a PUT request
-    const foundTodo = this.todoList.find((todo) => todo.id === updatedTodo.id);
-    if (!foundTodo) {
-      throw new Error('todo not found');
+    const response = await fetch(this.apiUrl + '/' + updatedTodo.id, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        title: updatedTodo.title,
+        completed: updatedTodo.completed,
+      }),
+    });
+    if (!response.ok) {
+      throw new Error('Failed to POST todo');
     }
-    Object.assign(foundTodo, updatedTodo);
 
-    return foundTodo;
+    this.refreshTodos();
+    return await response.json();
   }
 }
